@@ -1,7 +1,29 @@
+import React from 'react';
+import { scaleLinear } from 'd3-scale';
+import { max }, { min } from 'd3-array';
+import { select } from 'd3-selection';
+import { axisBottom }, { axisLeft } from 'd3-axis';
+import csvdata from "data/wealth-health-2014.csv";
+import { csv } from 'd3-request';
+
+class Visualization extends React.Component {
+    constructor(props){
+        super(props);
+        this.createVisualization = this.createVisualization.bind(this);
+    }
+
+
+componentDidMount(){
+    this.createVisualization(csvdata);
+}
+
+componentDidUpdate(){
+    this.createVisualization(csvdata);
+}
 
 // SVG Size
-var width = 700,
-	height = 500;
+var width = 700;
+var	height = 500;
 
 var regions = [];
 var prepareData = function(data) {
@@ -35,36 +57,42 @@ var createVisualization = function(data) {
 	// Use the margin convention with 50 px of bottom padding and 30 px of padding on other sides!
 
 
-	var svg = d3.select("body").append("svg")
-		.attr("id","chart-area")
-		.attr("width", width + margin.left + margin.right)
-		.attr("height", height + margin.top + margin.bottom)
-		.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	// var svg = d3.select("body").append("svg")
+	// 	.attr("id","chart-area")
+	// 	.attr("width", width + margin.left + margin.right)
+	// 	.attr("height", height + margin.top + margin.bottom)
+	// 	.append("g")
+	// 	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 	// Step 3: Create linear scales by using the D3 scale functions
 	// You will need an income scale (x-axis) and a scale function for the life expectancy (y-axis).
 	// Call them incomeScale and lifeExpectancyScale.
 	// Use d3.min() and d3.max() for the input domain
 	// Use the variables height and width for the output range
-	var lowX = d3.min(data, function(d){ return d.Income;})-2000;
-	var lowY = d3.min(data, function(d){ return d.LifeExpectancy;})-2;
-	var highX = d3.max(data, function(d){ return d.Income;})+2000;
-	var highY = d3.max(data, function(d){ return d.LifeExpectancy;})+5;
-	var xScale = d3.scaleLinear()
+    
+    console.log(data);
+	console.log("Countries: " + data.length);
+	data.sort(compare);
+    
+    
+    var lowX = min(data, function(d){ return d.Income;})-2000;
+	var lowY = min(data, function(d){ return d.LifeExpectancy;})-2;
+	var highX = max(data, function(d){ return d.Income;})+2000;
+	var highY = max(data, function(d){ return d.LifeExpectancy;})+5;
+	var xScale = scaleLinear()
 		.domain([lowX, highX])
 		.range([margin.left, margin.left + width]);
-	console.log(xScale(d3.min(data, function(d){ return d.Income;})));
-	var yScale = d3.scaleLinear()
+	console.log(xScale(min(data, function(d){ return d.Income;})));
+	var yScale = scaleLinear()
 		.domain([lowY,highY])
 		.range([margin.top + height,margin.top]);
-	var rScale = d3.scaleLinear()
+	var rScale = scaleLinear()
 		.domain([
-			d3.min(data, function (d){return d.Population;}),
-			d3.max(data, function (d){return d.Population;})
+			min(data, function (d){return d.Population;}),
+			max(data, function (d){return d.Population;})
 		])
 		.range([4,30]);
-	var linearColor = d3.scaleLinear()
+	var linearColor = scaleLinear()
 		.domain([0,1,2,3,4,5])
 		.range(["darkgreen","darkorange","red","pink","blue","tan"]);
 	// Step 4: Try the scale functions
@@ -76,7 +104,8 @@ var createVisualization = function(data) {
 	// Use select(), data(), enter() and append()
 	// Instead of setting the x- and y-values directly,
 	// you have to use your scale functions to convert the data values to pixel measures
-	svg.selectAll("circle")
+    select(node)
+        .selectAll("circle")
 		.data(data)
 		.enter()
 		.append("circle")
@@ -95,9 +124,9 @@ var createVisualization = function(data) {
 
 
 	// Step 6: Use your scales (income and life expectancy) to create D3 axis functions
-	var xAxis = d3.axisBottom()
+	var xAxis = axisBottom()
 		.scale(xScale);
-	var yAxis = d3.axisLeft()
+	var yAxis = axisLeft()
 		.scale(yScale);
 
 	// Step 7: Append the x- and y-axis to your scatterplot
@@ -150,14 +179,18 @@ var createVisualization = function(data) {
 
 
 // Load CSV file
-d3.csv("data/wealth-health-2014.csv", prepareData,function(data){
+csv("data/wealth-health-2014.csv", prepareData,function(data){
 
 	// Analyze the dataset in the web console
-	console.log(data);
-	console.log("Countries: " + data.length);
-	data.sort(compare);
+	
 	createVisualization(data);
 })
 
+render() {
+    return (
+        <svg ref={node=>this.node=node} width={width + margin.left + margin.right} height={height + margin.top + margin.bottom}></svg>
+    );
+}
+}
 
-
+export default Visualization;
